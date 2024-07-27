@@ -11,7 +11,7 @@ import (
 )
 
 type LineResult struct {
-	Line      string
+	Line      []byte
 	PathFiles string
 }
 
@@ -23,8 +23,9 @@ type FindLines struct {
 	arrResult  []LineResult
 }
 
+// SignalBar и Log не обязательны
 type FindLinesOptions struct {
-	LineCheck   func(line string) (string, bool, error)
+	LineCheck   func(line []byte) ([]byte, bool, error)
 	Log         *slog.Logger
 	FindOptions find.FindOption
 	
@@ -71,7 +72,7 @@ func (srt *FindLines) action(path string) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		
-		line, ok, err := srt.LineCheck(scanner.Text())
+		line, ok, err := srt.LineCheck(scanner.Bytes())
 		
 		if err != nil && srt.Log != nil {
 			srt.Log.Error("Error checking file:"+path, sl.Err(err))
@@ -92,7 +93,7 @@ func (srt *FindLines) goSave() {
 		for {
 			select {
 			case load := <-srt.loaderSave:
-				if load.Line == "exit" {
+				if load.PathFiles == "exit" {
 					return
 				}
 				
@@ -140,5 +141,5 @@ func (srt *FindLines) close() {
 	for _ = range srt.ThreadsCheckLines {
 		srt.loader <- "exit"
 	}
-	srt.loaderSave <- LineResult{"exit", ""}
+	srt.loaderSave <- LineResult{[]byte{}, "exit"}
 }

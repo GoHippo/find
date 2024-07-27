@@ -1,10 +1,11 @@
 package find_lines
 
 import (
+	"bytes"
 	"github.com/GoHippo/find"
 	"github.com/GoHippo/slogpretty/slogpretty"
 	"os"
-	"strings"
+	"slices"
 	"testing"
 )
 
@@ -15,12 +16,13 @@ func TestFindLinesStart(t *testing.T) {
 	}
 	defer os.Remove("./test.txt")
 	
-	fCheck := func(line string) (string, bool, error) {
-		line = strings.TrimSpace(line)
+	fCheck := func(res []byte) ([]byte, bool, error) {
+		line := string(bytes.TrimSpace(res))
+		
 		if line == "test_lines" {
-			return line, true, nil
+			return []byte(line), true, nil
 		}
-		return "", false, nil
+		return []byte(line), false, nil
 	}
 	
 	log := slogpretty.SetupPrettySlog()
@@ -46,7 +48,8 @@ func TestFindLinesStart(t *testing.T) {
 		t.Fatal(err)
 	}
 	
-	if arr[0].Line != "test_lines" && arr[3].Line != "test_lines" {
+	if !slices.Equal(arr[0].Line, []byte("test_lines")) && !slices.Equal(arr[1].Line, []byte("test_lines")) {
+		t.Log(len(arr), string(arr[0].Line), string(arr[1].Line))
 		t.Fatal("Error TestFindLinesStart ")
 	}
 }
