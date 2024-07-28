@@ -31,17 +31,17 @@ func TestFindLinesStart(t *testing.T) {
 		FuncCheck: fCheck,
 		Log:       log,
 		FindOptions: find_pathes.FindOption{
-			Log:         log,
-			FindName:    ".txt",
-			Path:        "./",
-			IsFile:      true,
-			Threads:     10,
-			SignalFind:  nil,
-			MaxSizeFile: 0,
+			Log:           log,
+			FindName:      ".txt",
+			Path:          "./",
+			IsFile:        true,
+			Threads:       10,
+			FuncSignalAdd: nil,
+			MaxSizeFile:   0,
 		},
 		
 		ThreadsCheckLines: 10,
-		SignalBar:         nil,
+		FuncSignalAdd:     nil,
 	})
 	
 	if err != nil {

@@ -19,13 +19,13 @@ type FindScan struct {
 }
 
 type FindOption struct {
-	Log         *slog.Logger
-	FindName    string
-	Path        string
-	IsFile      bool
-	Threads     int
-	SignalFind  chan int
-	MaxSizeFile int64
+	Log           *slog.Logger
+	FindName      string
+	Path          string
+	IsFile        bool
+	Threads       int
+	FuncSignalAdd func(i int)
+	MaxSizeFile   int64
 }
 
 func NewFindPath(opt FindOption) []string {
@@ -111,8 +111,8 @@ func (fs *FindScan) goHandleSavePath() {
 			select {
 			case p := <-fs.savePathLoader:
 				fs.arrPathCookies = append(fs.arrPathCookies, p)
-				if fs.SignalFind != nil {
-					fs.SignalFind <- 1
+				if fs.FuncSignalAdd != nil {
+					fs.FuncSignalAdd(1)
 				}
 			case _ = <-fs.signalExit:
 				return

@@ -31,7 +31,7 @@ type FindLinesOptions struct {
 	FindOptions find_pathes.FindOption
 	
 	ThreadsCheckLines int
-	SignalBar         chan int
+	FuncSignalAdd     func(i int)
 }
 
 func NewFindLines(opt FindLinesOptions) ([]LineResult, error) {
@@ -120,8 +120,8 @@ func (srt *FindLines) goPool() {
 					
 					srt.action(load)
 					
-					if srt.SignalBar != nil {
-						srt.SignalBar <- 1
+					if srt.FuncSignalAdd != nil {
+						srt.FuncSignalAdd(1)
 					}
 					
 					srt.wg.Done()
