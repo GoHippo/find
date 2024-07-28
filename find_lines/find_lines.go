@@ -40,10 +40,6 @@ func NewFindLines(opt FindLinesOptions) ([]LineResult, error) {
 		return nil, nil
 	}
 	
-	if opt.Log != nil {
-		opt.Log.Info("The beginning of files parsing.")
-	}
-	
 	scan.loader = make(chan string, len(opt.PathFiles))
 	scan.loaderSave = make(chan LineResult, 1000)
 	scan.goSave()
