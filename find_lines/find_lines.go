@@ -73,7 +73,7 @@ func (srt *FindLines) action(path string) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		
-		line, ok, err := srt.LineCheckFunc(scanner.Bytes())
+		line, ok, err := srt.FuncCheck(scanner.Bytes())
 		
 		if err != nil && srt.Log != nil {
 			srt.Log.Error("Error checking file:"+path, sl.Err(err))

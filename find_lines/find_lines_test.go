@@ -2,7 +2,7 @@ package find_lines
 
 import (
 	"bytes"
-	"github.com/GoHippo/find"
+	"github.com/GoHippo/find/find_pathes"
 	"github.com/GoHippo/slogpretty/slogpretty"
 	"os"
 	"slices"
@@ -28,9 +28,9 @@ func TestFindLinesStart(t *testing.T) {
 	log := slogpretty.SetupPrettySlog()
 	
 	arr, err := NewFindLines(FindLinesOptions{
-		LineCheckFunc: fCheck,
-		Log:           log,
-		FindOptions: find.FindOption{
+		FuncCheck: fCheck,
+		Log:       log,
+		FindOptions: find_pathes.FindOption{
 			Log:         log,
 			FindName:    ".txt",
 			Path:        "./",
