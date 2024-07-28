@@ -1,4 +1,4 @@
-package find
+package find_pathes
 
 import (
 	"log/slog"

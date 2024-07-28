@@ -2,7 +2,7 @@ package find_lines
 
 import (
 	"bufio"
-	"github.com/GoHippo/find"
+	"github.com/GoHippo/find/find_pathes"
 	"github.com/GoHippo/slogpretty/sl"
 	"log/slog"
 	"os"
@@ -27,16 +27,16 @@ type FindLines struct {
 type FindLinesOptions struct {
 	LineCheck   func(line []byte) ([]byte, bool, error)
 	Log         *slog.Logger
-	FindOptions find.FindOption
+	FindOptions find_pathes.FindOption
 	
 	ThreadsCheckLines int
 	SignalBar         chan int
 }
 
-func FindLinesStart(opt FindLinesOptions) ([]LineResult, error) {
+func NewFindLines(opt FindLinesOptions) ([]LineResult, error) {
 	scan := FindLines{FindLinesOptions: opt, wg: &sync.WaitGroup{}}
 	
-	arrPathFiles := find.NewFindPath(opt.FindOptions)
+	arrPathFiles := find_pathes.NewFindPath(opt.FindOptions)
 	if len(arrPathFiles) == 0 {
 		return nil, nil
 	}

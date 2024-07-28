@@ -27,7 +27,7 @@ func TestFindLinesStart(t *testing.T) {
 	
 	log := slogpretty.SetupPrettySlog()
 	
-	arr, err := FindLinesStart(FindLinesOptions{
+	arr, err := NewFindLines(FindLinesOptions{
 		LineCheck: fCheck,
 		Log:       log,
 		FindOptions: find.FindOption{
