@@ -22,12 +22,13 @@ type FindLines struct {
 	wg         *sync.WaitGroup
 	arrResult  []LineResult
 }
+type FuncLineCheck func(line []byte) ([]byte, bool, error)
 
 // SignalBar и Log не обязательны
 type FindLinesOptions struct {
-	LineCheckFunc func(line []byte) ([]byte, bool, error)
-	Log           *slog.Logger
-	FindOptions   find_pathes.FindOption
+	FuncCheck   FuncLineCheck
+	Log         *slog.Logger
+	FindOptions find_pathes.FindOption
 	
 	ThreadsCheckLines int
 	SignalBar         chan int
