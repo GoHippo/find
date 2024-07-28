@@ -27,19 +27,20 @@ func TestFindLinesStart(t *testing.T) {
 	
 	log := slogpretty.SetupPrettySlog()
 	
+	pathFiles := find_pathes.NewFindPath(find_pathes.FindOption{
+		Log:           log,
+		FindName:      ".txt",
+		Path:          "./",
+		IsFile:        true,
+		Threads:       10,
+		FuncSignalAdd: nil,
+		MaxSizeFile:   0,
+	})
+	
 	arr, err := NewFindLines(FindLinesOptions{
-		FuncCheck: fCheck,
-		Log:       log,
-		FindOptions: find_pathes.FindOption{
-			Log:           log,
-			FindName:      ".txt",
-			Path:          "./",
-			IsFile:        true,
-			Threads:       10,
-			FuncSignalAdd: nil,
-			MaxSizeFile:   0,
-		},
-		
+		PathFiles:         pathFiles,
+		FuncCheck:         fCheck,
+		Log:               log,
 		ThreadsCheckLines: 10,
 		FuncSignalAdd:     nil,
 	})

@@ -2,7 +2,6 @@ package find_lines
 
 import (
 	"bufio"
-	"github.com/GoHippo/find/find_pathes"
 	"github.com/GoHippo/slogpretty/sl"
 	"log/slog"
 	"os"
@@ -26,10 +25,9 @@ type FuncLineCheck func(line []byte) ([]byte, bool, error)
 
 // SignalBar и Log не обязательны
 type FindLinesOptions struct {
-	PathFiles   []string
-	FuncCheck   FuncLineCheck
-	Log         *slog.Logger
-	FindOptions find_pathes.FindOption
+	PathFiles []string
+	FuncCheck FuncLineCheck
+	Log       *slog.Logger
 	
 	ThreadsCheckLines int
 	FuncSignalAdd     func(i int)
