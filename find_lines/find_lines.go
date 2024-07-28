@@ -26,6 +26,7 @@ type FuncLineCheck func(line []byte) ([]byte, bool, error)
 
 // SignalBar и Log не обязательны
 type FindLinesOptions struct {
+	PathFiles   []string
 	FuncCheck   FuncLineCheck
 	Log         *slog.Logger
 	FindOptions find_pathes.FindOption
@@ -37,8 +38,7 @@ type FindLinesOptions struct {
 func NewFindLines(opt FindLinesOptions) ([]LineResult, error) {
 	scan := FindLines{FindLinesOptions: opt, wg: &sync.WaitGroup{}}
 	
-	arrPathFiles := find_pathes.NewFindPath(opt.FindOptions)
-	if len(arrPathFiles) == 0 {
+	if len(opt.PathFiles) == 0 {
 		return nil, nil
 	}
 	
@@ -46,12 +46,12 @@ func NewFindLines(opt FindLinesOptions) ([]LineResult, error) {
 		opt.Log.Info("The beginning of files parsing.")
 	}
 	
-	scan.loader = make(chan string, len(arrPathFiles))
+	scan.loader = make(chan string, len(opt.PathFiles))
 	scan.loaderSave = make(chan LineResult, 1000)
 	scan.goSave()
 	scan.goPool()
 	
-	for _, path := range arrPathFiles {
+	for _, path := range opt.PathFiles {
 		scan.wg.Add(1)
 		scan.loader <- path
 	}
