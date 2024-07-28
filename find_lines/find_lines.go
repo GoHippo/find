@@ -25,9 +25,9 @@ type FindLines struct {
 
 // SignalBar и Log не обязательны
 type FindLinesOptions struct {
-	LineCheck   func(line []byte) ([]byte, bool, error)
-	Log         *slog.Logger
-	FindOptions find_pathes.FindOption
+	LineCheckFunc func(line []byte) ([]byte, bool, error)
+	Log           *slog.Logger
+	FindOptions   find_pathes.FindOption
 	
 	ThreadsCheckLines int
 	SignalBar         chan int
@@ -72,7 +72,7 @@ func (srt *FindLines) action(path string) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		
-		line, ok, err := srt.LineCheck(scanner.Bytes())
+		line, ok, err := srt.LineCheckFunc(scanner.Bytes())
 		
 		if err != nil && srt.Log != nil {
 			srt.Log.Error("Error checking file:"+path, sl.Err(err))

@@ -28,8 +28,8 @@ func TestFindLinesStart(t *testing.T) {
 	log := slogpretty.SetupPrettySlog()
 	
 	arr, err := NewFindLines(FindLinesOptions{
-		LineCheck: fCheck,
-		Log:       log,
+		LineCheckFunc: fCheck,
+		Log:           log,
 		FindOptions: find.FindOption{
 			Log:         log,
 			FindName:    ".txt",
