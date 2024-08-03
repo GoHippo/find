@@ -32,21 +32,21 @@ func NewFindPath(opt FindOption) []string {
 	opt.FindName = strings.ToLower(opt.FindName)
 	cfs := FindScan{
 		FindOption:     opt,
-		loaderScan:     make(chan string, 500000), // заблокируется если переполнить буфер
+		loaderScan:     make(chan string, 20000000), // заблокируется если переполнить буфер
 		savePathLoader: make(chan string),
 		wg:             &sync.WaitGroup{},
 		arrPathCookies: make([]string, 0),
 		signalExit:     make(chan struct{}),
 	}
-	
+
 	cfs.wg.Add(1)
 	cfs.loaderScan <- opt.Path
 	cfs.goHandleSavePath()
 	cfs.goPool()
 	cfs.wg.Wait()
-	
+
 	defer cfs.close()
-	
+
 	return cfs.arrPathCookies
 }
 
@@ -77,7 +77,7 @@ func (fs *FindScan) scan(p string) {
 		return
 	}
 	for _, sc := range dir {
-		
+
 		switch {
 		case sc.IsDir():
 			scPath := filepath.Join(p, sc.Name())
@@ -86,9 +86,9 @@ func (fs *FindScan) scan(p string) {
 			}
 			fs.wg.Add(1)
 			fs.loaderScan <- scPath
-		
+
 		case !sc.IsDir() && fs.IsFile && strings.Contains(strings.ToLower(sc.Name()), fs.FindName):
-			
+
 			if fs.MaxSizeFile != 0 {
 				fileInfo, err := sc.Info()
 				if err != nil {
@@ -99,7 +99,7 @@ func (fs *FindScan) scan(p string) {
 					continue
 				}
 			}
-			
+
 			fs.savePathLoader <- filepath.ToSlash(filepath.Join(p, sc.Name()))
 		}
 	}
