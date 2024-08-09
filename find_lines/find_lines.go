@@ -3,6 +3,7 @@ package find_lines
 import (
 	"bufio"
 	"github.com/GoHippo/slogpretty/sl"
+	"io"
 	"log/slog"
 	"os"
 	"sync"
@@ -22,12 +23,14 @@ type FindLines struct {
 	arrResult  []LineResult
 }
 type FuncLineCheck func(line []byte) ([]byte, bool, error)
+type FuncFileCheck func(file []byte) ([][]byte, bool, error)
 
 // SignalBar и Log не обязательны
 type FindLinesOptions struct {
-	PathFiles []string
-	FuncCheck FuncLineCheck
-	Log       *slog.Logger
+	PathFiles     []string
+	FuncCheckLine FuncLineCheck
+	FuncCheckFile FuncFileCheck
+	Log           *slog.Logger
 
 	ThreadsCheckLines int
 	FuncSignalAdd     func(i int)
@@ -64,18 +67,42 @@ func (srt *FindLines) action(path string) {
 		return
 	}
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
+	if srt.FuncCheckLine != nil {
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
 
-		line, ok, err := srt.FuncCheck(scanner.Bytes())
+			line, ok, err := srt.FuncCheckLine(scanner.Bytes())
+
+			if err != nil && srt.Log != nil {
+				srt.Log.Error("Error checking line in file:"+path, sl.Err(err))
+				continue
+			}
+
+			if ok {
+				srt.loaderSave <- LineResult{line, path}
+			}
+
+		}
+	}
+
+	if srt.FuncCheckFile != nil {
+		data, err := io.ReadAll(file)
+		if err != nil && srt.Log != nil {
+			srt.Log.Error("Error read file:"+path, sl.Err(err))
+			return
+		}
+
+		lines, ok, err := srt.FuncCheckFile(data)
 
 		if err != nil && srt.Log != nil {
 			srt.Log.Error("Error checking file:"+path, sl.Err(err))
-			continue
+			return
 		}
 
 		if ok {
-			srt.loaderSave <- LineResult{line, path}
+			for _, line := range lines {
+				srt.loaderSave <- LineResult{line, path}
+			}
 		}
 
 	}
