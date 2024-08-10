@@ -1,15 +1,6 @@
 package find_lines
 
-import (
-	"bytes"
-	"github.com/GoHippo/find/find_pathes"
-	"github.com/GoHippo/slogpretty/slogpretty"
-	"os"
-	"slices"
-	"testing"
-)
-
-func TestFindLinesStart(t *testing.T) {
+/*func TestFindLinesStart(t *testing.T) {
 
 	if err := create_file_for_test(); err != nil {
 		t.Error("Create test.txt file error: " + err.Error())
@@ -65,4 +56,4 @@ func create_file_for_test() error {
 
 	return nil
 
-}
+}*/

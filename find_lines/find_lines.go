@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"os"
 	"sync"
-	"time"
 )
 
 type LineResult struct {
@@ -22,7 +21,7 @@ type FindLines struct {
 	wg         *sync.WaitGroup
 	arrResult  []LineResult
 }
-type FuncLineCheck func(line string) (string, bool, error)
+type FuncLineCheck func(scanner *bufio.Scanner) ([]string, bool, error)
 type FuncFileCheck func(file []byte) ([]string, bool, error)
 
 // SignalBar и Log не обязательны
@@ -44,7 +43,7 @@ func NewFindLines(opt FindLinesOptions) ([]LineResult, error) {
 	}
 
 	scan.loader = make(chan string, len(opt.PathFiles))
-	scan.loaderSave = make(chan LineResult, 1000)
+	scan.loaderSave = make(chan LineResult, 1000000)
 	scan.goSave()
 	scan.goPool()
 
@@ -66,23 +65,21 @@ func (srt *FindLines) action(path string) {
 		srt.Log.Error("Error opening file:"+path, sl.Err(err))
 		return
 	}
+	defer file.Close()
 
 	if srt.FuncCheckLine != nil {
 		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
+		lines, ok, err := srt.FuncCheckLine(scanner)
+		if err != nil {
+			srt.Log.Error("Error checking lines in file", slog.String("path", path), sl.Err(err))
+		}
 
-			line, ok, err := srt.FuncCheckLine(scanner.Text())
-
-			if err != nil && srt.Log != nil {
-				srt.Log.Error("Error checking line in file:"+path, sl.Err(err))
-				continue
-			}
-
-			if ok {
+		if ok {
+			for _, line := range lines {
 				srt.loaderSave <- LineResult{line, path}
 			}
-
 		}
+
 	}
 
 	if srt.FuncCheckFile != nil {
@@ -107,53 +104,49 @@ func (srt *FindLines) action(path string) {
 
 	}
 
-	file.Close()
 }
 
 func (srt *FindLines) goSave() {
 	go func() {
+
 		for {
-			select {
-			case load := <-srt.loaderSave:
-				if load.PathFiles == "exit" {
-					return
-				}
-
-				srt.arrResult = append(srt.arrResult, load)
-
-			default:
-				time.Sleep(time.Millisecond * 10)
+			load := <-srt.loaderSave
+			if load.PathFiles == "exit" {
+				return
 			}
+			srt.arrResult = append(srt.arrResult, load)
 		}
+
 	}()
 }
 
 func (srt *FindLines) goPool() {
+	var countRunTreads int
 	for _ = range srt.ThreadsCheckLines {
+		countRunTreads++
 		go func() {
 			for {
-				select {
-				case load := <-srt.loader:
 
-					if load == "exit" {
-						return
-					}
+				load := <-srt.loader
 
-					srt.action(load)
-
-					if srt.FuncSignalAdd != nil {
-						srt.FuncSignalAdd(1)
-					}
-
-					srt.wg.Done()
-
-				default:
-					time.Sleep(time.Millisecond * 10)
+				if load == "exit" {
+					return
 				}
+
+				srt.action(load)
+
+				if srt.FuncSignalAdd != nil {
+					srt.FuncSignalAdd(1)
+				}
+
+				srt.wg.Done()
+
 			}
 
 		}()
 	}
+
+	srt.Log.Debug("run threads find_lines:", slog.Int("threads", countRunTreads))
 }
 
 func (srt *FindLines) close() {
