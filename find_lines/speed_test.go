@@ -9,10 +9,7 @@ import (
 	"github.com/GoHippo/find/pkg/pterm_tools/pb_default"
 	"github.com/GoHippo/find/pkg/pterm_tools/pb_spinner"
 	"github.com/GoHippo/slogpretty/slogpretty"
-	"github.com/schollz/progressbar/v3"
-	log2 "log"
 	"log/slog"
-	"net/http"
 	_ "net/http/pprof"
 	"regexp"
 	"strconv"
@@ -24,9 +21,9 @@ var log = slogpretty.SetupPrettySlog(slog.LevelInfo)
 
 func TestSpeedNewFindLines(t *testing.T) {
 
-	go func() {
-		log2.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
+	//go func() {
+	//	log2.Println(http.ListenAndServe("localhost:6060", nil))
+	//}()
 
 	path := `/home/meteoroot/ShareVM/WAGNER TRAFFIC #17 Thanks For Subscription`
 
@@ -68,7 +65,7 @@ func parse(arrPaths []string, log *slog.Logger) ([]LineResult, error) {
 	arrFindLines, err := NewFindLines(FindLinesOptions{
 		PathFiles:         arrPaths,
 		FuncCheckLine:     actionLines(),
-		FuncCheckFile:     nil,
+		FuncCheckFile:     actionFile(),
 		Log:               log,
 		ThreadsCheckLines: 30,
 		FuncSignalAdd:     pbLines.Add,
@@ -76,20 +73,6 @@ func parse(arrPaths []string, log *slog.Logger) ([]LineResult, error) {
 	//pb.Close("token")
 
 	return arrFindLines, err
-}
-
-// ====================== Msg ======================
-
-type pbv3 struct {
-	*progressbar.ProgressBar
-}
-
-func newPBV3(max int) pbv3 {
-	return pbv3{progressbar.Default(int64(max), "parse tokens")}
-}
-
-func (pb pbv3) Add(i int) {
-	pb.Add64(int64(i))
 }
 
 // ====================== ActionBox ======================
@@ -128,6 +111,7 @@ func actionLines() func(scanner *bufio.Scanner) ([]string, bool, error) {
 					}
 
 					arrTokens = append(arrTokens, token)
+					continue
 				}
 
 				if reLumma.Match(str) {

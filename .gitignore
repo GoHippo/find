@@ -1,1 +1,5 @@
 .idea/
+pkg
+pkg/
+find_lines/find_lines_test.go
+find_lines/speed_test.go
