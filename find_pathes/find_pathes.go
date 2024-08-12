@@ -14,8 +14,10 @@ type FindScan struct {
 	loaderScan     chan string
 	savePathLoader chan string
 	wg             *sync.WaitGroup
+	wgSave         *sync.WaitGroup
 	arrPathCookies []string
 	signalExit     chan struct{}
+	signalSaveExit chan struct{}
 }
 
 type FindOption struct {
@@ -35,8 +37,10 @@ func NewFindPath(opt FindOption) []string {
 		loaderScan:     make(chan string, 20000000), // заблокируется если переполнить буфер
 		savePathLoader: make(chan string),
 		wg:             &sync.WaitGroup{},
+		wgSave:         &sync.WaitGroup{},
 		arrPathCookies: make([]string, 0),
 		signalExit:     make(chan struct{}),
+		signalSaveExit: make(chan struct{}),
 	}
 
 	cfs.wg.Add(1)
@@ -44,8 +48,9 @@ func NewFindPath(opt FindOption) []string {
 	cfs.goHandleSavePath()
 	cfs.goPool()
 	cfs.wg.Wait()
+	cfs.wgSave.Wait()
 
-	defer cfs.close()
+	cfs.close()
 
 	return cfs.arrPathCookies
 }
@@ -82,6 +87,7 @@ func (fs *FindScan) scan(p string) {
 		case sc.IsDir():
 			scPath := filepath.Join(p, sc.Name())
 			if !fs.IsFile && strings.Contains(strings.ToLower(sc.Name()), fs.FindName) {
+				fs.wgSave.Add(1)
 				fs.savePathLoader <- scPath
 			}
 			fs.wg.Add(1)
@@ -100,6 +106,7 @@ func (fs *FindScan) scan(p string) {
 				}
 			}
 
+			fs.wgSave.Add(1)
 			fs.savePathLoader <- filepath.ToSlash(filepath.Join(p, sc.Name()))
 		}
 	}
@@ -114,7 +121,8 @@ func (fs *FindScan) goHandleSavePath() {
 				if fs.FuncSignalAdd != nil {
 					fs.FuncSignalAdd(1)
 				}
-			case _ = <-fs.signalExit:
+				fs.wgSave.Done()
+			case _ = <-fs.signalSaveExit:
 				return
 			default:
 				time.Sleep(time.Millisecond)
@@ -124,10 +132,13 @@ func (fs *FindScan) goHandleSavePath() {
 }
 
 func (fs *FindScan) close() {
-	for _ = range fs.Threads + 1 {
+	for _ = range fs.Threads {
 		fs.signalExit <- struct{}{}
 	}
+	fs.signalSaveExit <- struct{}{}
+
 	close(fs.savePathLoader)
 	close(fs.signalExit)
 	close(fs.loaderScan)
+	close(fs.signalSaveExit)
 }

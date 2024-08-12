@@ -19,6 +19,7 @@ type FindLines struct {
 	loader     chan string
 	loaderSave chan LineResult
 	wg         *sync.WaitGroup
+	wgSave     *sync.WaitGroup
 	arrResult  []LineResult
 }
 type FuncLineCheck func(scanner *bufio.Scanner) ([]string, bool, error)
@@ -36,7 +37,7 @@ type FindLinesOptions struct {
 }
 
 func NewFindLines(opt FindLinesOptions) ([]LineResult, error) {
-	scan := FindLines{FindLinesOptions: opt, wg: &sync.WaitGroup{}}
+	scan := FindLines{FindLinesOptions: opt, wg: &sync.WaitGroup{}, wgSave: &sync.WaitGroup{}}
 
 	if len(opt.PathFiles) == 0 {
 		return nil, nil
@@ -53,6 +54,7 @@ func NewFindLines(opt FindLinesOptions) ([]LineResult, error) {
 	}
 
 	scan.wg.Wait()
+	scan.wgSave.Wait()
 	scan.close()
 
 	return scan.arrResult, nil
@@ -76,6 +78,7 @@ func (srt *FindLines) action(path string) {
 
 		if ok {
 			for _, line := range lines {
+				srt.wgSave.Add(1)
 				srt.loaderSave <- LineResult{line, path}
 			}
 		}
@@ -115,6 +118,7 @@ func (srt *FindLines) goSave() {
 				return
 			}
 			srt.arrResult = append(srt.arrResult, load)
+			srt.wgSave.Done()
 		}
 
 	}()
