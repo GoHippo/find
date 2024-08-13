@@ -17,11 +17,12 @@ type LineResult struct {
 
 type FindLines struct {
 	FindLinesOptions
-	loader       chan string
-	loaderSave   chan LineResult
-	wg           *sync.WaitGroup
-	wgSave       *sync.WaitGroup
-	ResultSearch map[string]LineResult // line
+	loader          chan string
+	loaderSave      chan LineResult
+	wg              *sync.WaitGroup
+	wgSave          *sync.WaitGroup
+	countLinesTotal int
+	ResultSearch    map[string]LineResult // line
 }
 type FuncLineCheck func(scanner *bufio.Scanner) ([]string, bool, error)
 type FuncFileCheck func(file []byte) ([]string, bool, error)
@@ -37,11 +38,11 @@ type FindLinesOptions struct {
 	FuncSignalAdd     func(i int)
 }
 
-func NewFindLines(opt FindLinesOptions) (map[string]LineResult, error) {
+func NewFindLines(opt FindLinesOptions) ([]LineResult, int, error) {
 	scan := FindLines{FindLinesOptions: opt, wg: &sync.WaitGroup{}, wgSave: &sync.WaitGroup{}, ResultSearch: make(map[string]LineResult)}
 
 	if len(opt.PathFiles) == 0 {
-		return nil, nil
+		return nil, 0, nil
 	}
 
 	scan.loader = make(chan string, len(opt.PathFiles))
@@ -58,7 +59,12 @@ func NewFindLines(opt FindLinesOptions) (map[string]LineResult, error) {
 	scan.wgSave.Wait()
 	scan.close()
 
-	return scan.ResultSearch, nil
+	var arrLinesResult []LineResult
+	for _, line := range scan.ResultSearch {
+		arrLinesResult = append(arrLinesResult, line)
+	}
+
+	return arrLinesResult, scan.countLinesTotal, nil
 }
 
 func (srt *FindLines) action(path string) {
@@ -118,6 +124,7 @@ func (srt *FindLines) goSave() {
 			if load.PathFiles == "exit" {
 				return
 			}
+			srt.countLinesTotal++
 			load.Line = strings.TrimSpace(load.Line)
 			srt.ResultSearch[load.Line] = load
 			srt.wgSave.Done()
