@@ -21,7 +21,7 @@ type FindLines struct {
 	loaderSave   chan LineResult
 	wg           *sync.WaitGroup
 	wgSave       *sync.WaitGroup
-	ResultSearch map[string]LineResult
+	ResultSearch map[string]LineResult // line
 }
 type FuncLineCheck func(scanner *bufio.Scanner) ([]string, bool, error)
 type FuncFileCheck func(file []byte) ([]string, bool, error)
