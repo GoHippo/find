@@ -43,10 +43,12 @@ func NewFindPath(opt FindOption) []string {
 		signalSaveExit: make(chan struct{}),
 	}
 
-	cfs.wg.Add(1)
-	cfs.loaderScan <- opt.Path
 	cfs.goHandleSavePath()
 	cfs.goPool()
+
+	cfs.wg.Add(1)
+	cfs.loaderScan <- opt.Path
+
 	cfs.wg.Wait()
 	cfs.wgSave.Wait()
 
@@ -75,6 +77,7 @@ func (fs *FindScan) goPool() {
 
 func (fs *FindScan) scan(p string) {
 	defer fs.wg.Done()
+
 	// defer bar.Add(1)
 	dir, err := os.ReadDir(p)
 	if err != nil {
@@ -90,6 +93,7 @@ func (fs *FindScan) scan(p string) {
 				fs.wgSave.Add(1)
 				fs.savePathLoader <- scPath
 			}
+
 			fs.wg.Add(1)
 			fs.loaderScan <- scPath
 

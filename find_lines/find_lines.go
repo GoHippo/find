@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -16,11 +17,11 @@ type LineResult struct {
 
 type FindLines struct {
 	FindLinesOptions
-	loader     chan string
-	loaderSave chan LineResult
-	wg         *sync.WaitGroup
-	wgSave     *sync.WaitGroup
-	arrResult  []LineResult
+	loader       chan string
+	loaderSave   chan LineResult
+	wg           *sync.WaitGroup
+	wgSave       *sync.WaitGroup
+	ResultSearch map[string]LineResult
 }
 type FuncLineCheck func(scanner *bufio.Scanner) ([]string, bool, error)
 type FuncFileCheck func(file []byte) ([]string, bool, error)
@@ -36,8 +37,8 @@ type FindLinesOptions struct {
 	FuncSignalAdd     func(i int)
 }
 
-func NewFindLines(opt FindLinesOptions) ([]LineResult, error) {
-	scan := FindLines{FindLinesOptions: opt, wg: &sync.WaitGroup{}, wgSave: &sync.WaitGroup{}}
+func NewFindLines(opt FindLinesOptions) (map[string]LineResult, error) {
+	scan := FindLines{FindLinesOptions: opt, wg: &sync.WaitGroup{}, wgSave: &sync.WaitGroup{}, ResultSearch: make(map[string]LineResult)}
 
 	if len(opt.PathFiles) == 0 {
 		return nil, nil
@@ -57,7 +58,7 @@ func NewFindLines(opt FindLinesOptions) ([]LineResult, error) {
 	scan.wgSave.Wait()
 	scan.close()
 
-	return scan.arrResult, nil
+	return scan.ResultSearch, nil
 }
 
 func (srt *FindLines) action(path string) {
@@ -117,7 +118,8 @@ func (srt *FindLines) goSave() {
 			if load.PathFiles == "exit" {
 				return
 			}
-			srt.arrResult = append(srt.arrResult, load)
+			load.Line = strings.TrimSpace(load.Line)
+			srt.ResultSearch[load.Line] = load
 			srt.wgSave.Done()
 		}
 
